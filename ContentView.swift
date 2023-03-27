@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var aiName = ""
+
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            Text("Hello, world!")
+            TextField("Enter AI character name", text: $aiName)
+                .padding()
         }
     }
 }
