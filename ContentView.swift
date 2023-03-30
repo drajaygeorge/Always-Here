@@ -1,98 +1,140 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var name: String = ""
-    @State private var age: String = ""
-    @State private var gender: String = ""
-    @State private var occupation: String = ""
-    @State private var hobbies: String = ""
-    @State private var favorites: String = ""
-    @State private var personality: String = ""
+    @State private var name = ""
+    @State private var age = ""
+    @State private var gender = ""
+    @State private var occupation = ""
+    @State private var hobbies = ""
+    @State private var favorites = ""
+    @State private var personality = ""
+    @State private var showAlert = false
     
     var body: some View {
         NavigationView {
-            Group {
-                VStack(alignment: .leading) {
-                    Text("Let's Talk About Your Loved One")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.bottom, 20)
-                    
-                    Text("What is the name of your loved one?")
-                    TextField("Enter name", text: $name)
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Let's Talk About Your Loved One")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                
+                TextField("Enter name", text: $name)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                
+                if !name.isEmpty {
+                    TextField("Enter age", text: $age)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.bottom, 10)
                     
-                    if !name.isEmpty {
-                        Text("How old do you want \(name) to be in this conversation?")
-                        TextField("Enter age", text: $age)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.bottom, 10)
+                    Picker("Gender", selection: $gender) {
+                        Text("Male").tag("Male")
+                        Text("Female").tag("Female")
+                        Text("Other").tag("Other")
                     }
-                    
-                    if !age.isEmpty {
-                        Text("\(name)'s gender")
-                        Picker("Gender", selection: $gender) {
-                            Text("Male").tag("Male")
-                            Text("Female").tag("Female")
-                            Text("Other").tag("Other")
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.bottom, 10)
-                    }
-                    
-                    if !gender.isEmpty {
-                        Text("\(name)'s occupation")
-                        TextField("Enter occupation", text: $occupation)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.bottom, 10)
-                    }
-                    
-                    if !occupation.isEmpty {
-                        Text("\(name)'s hobbies or interests")
-                        TextField("Enter hobbies or interests", text: $hobbies)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.bottom, 10)
-                    }
-                    
-                    if !hobbies.isEmpty {
-                        Text("\(name)'s favorite books, movies, or TV shows")
-                        TextField("Enter favorites", text: $favorites)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.bottom, 10)
-                    }
-                    
-                    if !favorites.isEmpty {
-                        Text("How would you describe \(name)'s personality in a few words?")
-                        TextField("Enter personality", text: $personality)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.bottom, 10)
-                    }
+                    .pickerStyle(MenuPickerStyle())
                 }
                 
-                VStack {
-                    Spacer()
+                if !gender.isEmpty {
+                    TextField("Enter occupation", text: $occupation)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                     
-                    Button(action: {
-                        // Start talking action
-                    }) {
-                        Text("Start talking")
-                            .foregroundColor(.white)
-                            .font(.headline)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.blue)
-                            .cornerRadius(10)
-                            .padding()
-                    }
+                    TextField("Enter hobbies or interests", text: $hobbies)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    
+                    TextField("Enter favorites", text: $favorites)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    
+                    TextField("Enter personality", text: $personality)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
+                
+                Spacer()
+                
+                Button(action: startChat) {
+                    Text("Start talking")
+                        .foregroundColor(.white)
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                }
+                .disabled(!allFieldsFilledOut)
+                .alert(isPresented: $showAlert) {
+                    Alert(title: Text("Missing Information"), message: Text("Please fill out all fields before starting the chat."), dismissButton: .default(Text("OK")))
+                }
+                
+                Spacer()
             }
             .padding()
-            .navigationBarTitle("")
+            .navigationBarTitle("", displayMode: .inline)
             .navigationBarHidden(true)
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .preferredColorScheme(.dark)
     }
+    
+    var allFieldsFilledOut: Bool {
+        !name.isEmpty && !age.isEmpty && !gender.isEmpty && !occupation.isEmpty && !hobbies.isEmpty && !favorites.isEmpty && !personality.isEmpty
+    }
+
+    func startChat() {
+        if allFieldsFilledOut {
+            let character = Character(name: name, age: age, gender: gender, occupation: occupation, hobbies: hobbies, favorites: favorites, personality: personality)
+            let chatView = ChatView(character: character)
+        } else {
+            showAlert = true
+        }
+    }
+}
+
+struct ChatView: View {
+    var character: Character
+    @State private var message = ""
+    
+    func sendMessage() {
+        let newMessage = Message(text: message, isSentByUser: true)
+        let updatedCharacter = Character(name: character.name,
+                                          age: character.age,
+                                          gender: character.gender,
+                                          occupation: character.occupation,
+                                          hobbies: character.hobbies,
+                                          favorites: character.favorites,
+                                          personality: character.personality,
+                                          messages: character.messages + [newMessage])
+        character = updatedCharacter
+        message = ""
+    }
+
+    var body: some View {
+        VStack {
+            Text("Welcome to your chat with \(character.name)!").font(.headline).padding()
+            ScrollView {
+                // Your chat message bubbles go here
+
+            }
+            HStack {
+                TextField("Type a message...", text: $message)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+                Button(action: sendMessage) {
+                    Text("Send").bold()
+                }
+            }
+        }
+    }
+}
+
+struct Character {
+    let name: String
+    let age: String
+    let gender: String
+    let occupation: String
+    let hobbies: String
+    let favorites: String
+    let personality: String
+    var messages: [Message]
+}
+
+struct Message {
+    let text: String
+    let isSentByUser: Bool
 }
